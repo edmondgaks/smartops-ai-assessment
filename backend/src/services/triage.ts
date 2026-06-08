@@ -80,6 +80,22 @@ function extractJSON(raw: string): unknown {
     } catch {}
   }
 
+  // Layer 4: try fixing truncated json by appending closing braces/quotes
+  if (start !== -1) {
+    const fromStart = stripped.slice(stripped.indexOf("{"));
+    const options = [
+      fromStart + "}",
+      fromStart + "\"}",
+      fromStart + "\n}",
+      fromStart + "\"\n}"
+    ];
+    for (const opt of options) {
+      try {
+        return JSON.parse(opt);
+      } catch {}
+    }
+  }
+
   throw new Error("Could not extract valid JSON from model output");
 }
 
