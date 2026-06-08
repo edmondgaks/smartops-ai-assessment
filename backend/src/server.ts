@@ -1,6 +1,8 @@
 import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
 import { initDB } from "./services/db";
+import triageRouter from "./routes/triage";
+import modelsRouter from "./routes/models";
 
 
 const app = express();
@@ -12,8 +14,8 @@ app.use(express.json({ limit: "10mb" }));
 
 app.get("/health", (_req, res) => res.json({ status: "ok", ts: new Date().toISOString() }));
 
-
-
+app.use("/api/triage", triageRouter);
+app.use("/api/models", modelsRouter);
 initDB();
 
 app.listen(PORT, () => {
