@@ -1,5 +1,6 @@
 import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
+import { initDB } from "./services/db";
 
 
 const app = express();
@@ -13,8 +14,9 @@ app.get("/health", (_req, res) => res.json({ status: "ok", ts: new Date().toISOS
 
 
 
-
+initDB();
 
 app.listen(PORT, () => {
   console.log(`\n✅ Backend → http://localhost:${PORT}`);
+   console.log(`   Ollama  → ${process.env.OLLAMA_URL ?? "http://localhost:11434"}`);
 });
