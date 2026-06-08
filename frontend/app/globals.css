@@ -1,3 +1,28 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  html {
+    font-family: "IBM Plex Mono", monospace;
+  }
+
+  /* Smooth theme transitions */
+  * {
+    @apply transition-colors duration-150;
+  }
+
+  /* Custom scrollbar — works in both themes */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { @apply bg-transparent; }
+  ::-webkit-scrollbar-thumb { @apply bg-zinc-600 dark:bg-zinc-500 rounded-full; }
+}
+
+@layer components {
+  /* Spinner */
+  .spinner {
+    @apply inline-block w-4 h-4 border-2 border-zinc-500 border-t-accent rounded-full animate-spin-slow;
+  }
+}
