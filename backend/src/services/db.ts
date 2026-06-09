@@ -1,6 +1,7 @@
 import Database from "better-sqlite3";
 import path from "path";
 import fs from "fs";
+import { log } from "./logger";
 
 const DB_PATH = path.join(__dirname, "../../data/assessment.db");
 
@@ -62,6 +63,6 @@ export function initDB(): Database.Database {
     CREATE INDEX IF NOT EXISTS idx_chat_session ON chat_messages(session_id);
   `);
 
-  console.log(`✅ Database ready at ${DB_PATH}`);
+  log.success("Database", `Database ready at ${DB_PATH}`);
   return db;
 }

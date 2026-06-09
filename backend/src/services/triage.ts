@@ -6,6 +6,7 @@ import type {
   TicketSentiment,
   KeyFields,
 } from "../types/index";
+import { log } from "./logger";
 
 const CATEGORIES: TicketCategory[] = [
   "billing",
@@ -59,7 +60,9 @@ function extractJSON(raw: string): unknown {
 
   // Layer 1: direct parse
   try {
-    return JSON.parse(raw);
+    const result = JSON.parse(raw);
+    log.debug("TriageService", "Layer 1 JSON extraction succeeded");
+    return result;
   } catch {}
 
   // Layer 2: strip markdown fences
@@ -68,7 +71,9 @@ function extractJSON(raw: string): unknown {
     .replace(/```\s*/g, "")
     .trim();
   try {
-    return JSON.parse(stripped);
+    const result = JSON.parse(stripped);
+    log.debug("TriageService", "Layer 2 JSON extraction (strip fences) succeeded");
+    return result;
   } catch {}
 
   // Layer 3: find first {...} block
@@ -76,7 +81,9 @@ function extractJSON(raw: string): unknown {
   const end = raw.lastIndexOf("}");
   if (start !== -1 && end > start) {
     try {
-      return JSON.parse(raw.slice(start, end + 1));
+      const result = JSON.parse(raw.slice(start, end + 1));
+      log.debug("TriageService", "Layer 3 JSON extraction (braces extract) succeeded");
+      return result;
     } catch {}
   }
 
@@ -91,11 +98,14 @@ function extractJSON(raw: string): unknown {
     ];
     for (const opt of options) {
       try {
-        return JSON.parse(opt);
+        const result = JSON.parse(opt);
+        log.debug("TriageService", "Layer 4 JSON extraction (auto-close) succeeded");
+        return result;
       } catch {}
     }
   }
 
+  log.warn("TriageService", "All JSON extraction layers failed", { rawPreview: raw.slice(0, 100) });
   throw new Error("Could not extract valid JSON from model output");
 }
 
@@ -182,9 +192,11 @@ export async function classifyTicket(rawText: string): Promise<TriageResult> {
     rawOutput = await generate(prompt, { temperature: 0.05, max_tokens: 800 });
     const parsed = extractJSON(rawOutput);
     const result = validateAndNormalize(parsed);
+    log.debug("TriageService", "Ticket successfully classified", { category: result.category, priority: result.priority });
     return { ...result, rawOutput, parseError: null };
   } catch (err) {
     const parseError = (err as Error).message;
+    log.warn("TriageService", "Classification failed, using fallback", { parseError });
     return { ...FALLBACK, rawOutput, parseError };
   }
 }

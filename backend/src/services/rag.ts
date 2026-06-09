@@ -9,6 +9,7 @@ import type {
   OllamaMessage,
   Citation,
 } from "../types/index";
+import { log } from "./logger";
 
 // ─── TF-IDF helpers ───────────────────────────────────────────────────────────
 
@@ -56,7 +57,10 @@ export function retrieveChunks(query: string, topK = TOP_K): RetrievalResult {
   const db = getDB();
   const docs = db.prepare("SELECT * FROM documents").all() as DocumentRow[];
 
-  if (!docs.length) return { chunks: [], belowThreshold: true, topScore: 0 };
+  if (!docs.length) {
+    log.debug("RAGService", "Knowledge base is empty");
+    return { chunks: [], belowThreshold: true, topScore: 0 };
+  }
 
   const qVec = buildTFVector(tokenize(query));
 
@@ -74,6 +78,13 @@ export function retrieveChunks(query: string, topK = TOP_K): RetrievalResult {
     .slice(0, topK);
 
   const relevant = scored.filter((d) => d.score >= RELEVANCE_THRESHOLD);
+  
+  log.debug("RAGService", "Retrieval complete", { 
+    queryLength: query.length, 
+    topScore: scored[0]?.score ?? 0, 
+    relevantCount: relevant.length 
+  });
+
   return {
     chunks: relevant,
     belowThreshold: relevant.length === 0,
@@ -113,6 +124,7 @@ export async function answerQuestion(
     .join("\n\n---\n\n");
 
   const grounded = !belowThreshold;
+  log.info("RAGService", "Answering question", { grounded, topScore, chunkCount: chunks.length });
 
   const messages: OllamaMessage[] = [
     {
@@ -124,6 +136,7 @@ export async function answerQuestion(
   ];
 
   const answer = await chat(messages, { temperature: 0.15, max_tokens: 800 });
+  log.debug("RAGService", "LLM chat response received", { answerLength: answer.length });
 
   const citations: Citation[] = chunks.map((c) => ({
     id: c.id,
@@ -161,6 +174,8 @@ export function ingestDocument(
     INSERT INTO documents (id, title, content, chunk_index, source, embedding)
     VALUES (?, ?, ?, ?, ?, ?)
   `);
+
+  log.debug("RAGService", "Ingesting document", { title, chunkCount: chunks.length });
 
   for (let i = 0; i < chunks.length; i++) {
     const id = uuidv4();

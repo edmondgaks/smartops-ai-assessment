@@ -3,6 +3,7 @@ import type {
   OllamaGenerateOptions,
   OllamaHealthResult,
 } from "../types/index";
+import { log } from "./logger";
 
 const OLLAMA_BASE = process.env.OLLAMA_URL ?? "http://localhost:11434";
 const MODEL = process.env.OLLAMA_MODEL ?? "llama3.2";
@@ -30,6 +31,7 @@ export async function generate(
   prompt: string,
   options: OllamaGenerateOptions = {}
 ): Promise<string> {
+  log.debug("Ollama", "Sending generate request", { model: MODEL, promptLength: prompt.length });
   const res = await fetch(`${OLLAMA_BASE}/api/generate`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -47,7 +49,9 @@ export async function generate(
   });
 
   if (!res.ok) {
-    throw new Error(`Ollama generate error ${res.status}: ${await res.text()}`);
+    const errText = await res.text();
+    log.error("Ollama", `Generate error ${res.status}`, { error: errText });
+    throw new Error(`Ollama generate error ${res.status}: ${errText}`);
   }
 
   const data = (await res.json()) as OllamaGenerateResponse;
@@ -58,6 +62,7 @@ export async function chat(
   messages: OllamaMessage[],
   options: OllamaGenerateOptions = {}
 ): Promise<string> {
+  log.debug("Ollama", "Sending chat request", { model: MODEL, messageCount: messages.length });
   const res = await fetch(`${OLLAMA_BASE}/api/chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -75,7 +80,9 @@ export async function chat(
   });
 
   if (!res.ok) {
-    throw new Error(`Ollama chat error ${res.status}: ${await res.text()}`);
+    const errText = await res.text();
+    log.error("Ollama", `Chat error ${res.status}`, { error: errText });
+    throw new Error(`Ollama chat error ${res.status}: ${errText}`);
   }
 
   const data = (await res.json()) as OllamaChatResponse;
@@ -87,7 +94,10 @@ export async function checkHealth(): Promise<OllamaHealthResult> {
     const res = await fetch(`${OLLAMA_BASE}/api/tags`, {
       signal: AbortSignal.timeout(5_000),
     });
-    if (!res.ok) return { ok: false, error: `HTTP ${res.status}` };
+    if (!res.ok) {
+      log.warn("Ollama", `Health check failed with status ${res.status}`);
+      return { ok: false, error: `HTTP ${res.status}` };
+    }
 
     const data = (await res.json()) as OllamaTagsResponse;
     const models = data.models?.map((m) => m.name) ?? [];
@@ -96,6 +106,7 @@ export async function checkHealth(): Promise<OllamaHealthResult> {
     );
     return { ok: true, models, modelAvailable, activeModel: MODEL };
   } catch (e) {
+    log.warn("Ollama", "Health check exception", { error: (e as Error).message });
     return { ok: false, error: (e as Error).message };
   }
 }
