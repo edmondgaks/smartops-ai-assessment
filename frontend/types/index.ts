@@ -42,6 +42,31 @@ export interface TriageStats {
   fallbackCount: number;
 }
 
+// ─── RAG ──────────────────────────────────────────────────────────────────────
+
+export interface Citation {
+  id: string;
+  title: string;
+  source: string | null;
+  score: number;
+}
+
+export interface ChatMessage {
+  id: number | string;
+  role: "user" | "assistant" | "error";
+  content: string;
+  citations?: Citation[];
+  grounded?: boolean;
+  topScore?: number;
+}
+
+export interface DocumentSummary {
+  title: string;
+  source: string | null;
+  chunkCount: number;
+  createdAt: string;
+}
+
 // ─── Model health ─────────────────────────────────────────────────────────────
 
 export interface ModelHealth {
