@@ -46,6 +46,18 @@ scripts\start.bat
 
 ---
 
+
+
+## macOS
+
+### Option A — Shell script (recommended)
+
+```bash
+chmod +x scripts/setup.sh scripts/start.sh
+./scripts/setup.sh    # one-time: installs Ollama, pulls model, npm install
+./scripts/start.sh    # every time: starts all services + opens browser
+```
+
 ### Option C — Docker Desktop (zero Node.js required)
 
 Install [Docker Desktop for Windows](https://www.docker.com/products/docker-desktop/), then:
