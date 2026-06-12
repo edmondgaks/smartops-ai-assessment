@@ -263,8 +263,8 @@ function ChatEmptyState({ docCount, onSeed, seedLoading }: { docCount: number; o
           </Button>
         ) : (
           <div className="text-[11px] text-zinc-400 space-y-1">
-            <div>"What is your refund policy?"</div>
-            <div>"What are the API rate limits?"</div>
+            <div>&quot;What is your refund policy?&quot;</div>
+            <div>&quot;What are the API rate limits?&quot;</div>
           </div>
         )
       }
